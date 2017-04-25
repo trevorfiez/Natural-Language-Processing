@@ -1,28 +1,29 @@
 F
-
 ($ (DT "DT"))
 ($ (PRO "PRO")
 ($ (N "N"))
-
+($ (PREP "PREP"))
 (DT (N "N"))
-
 (PRO (V "V"))
 (PRO (CONJ "CONJ"))
+(PRO (PREP "PREP"))
 (PRO (F *e*))
-
 (N (N "N"))
 (N (V "V"))
+(N (PREP "PREP"))
 (N (F *e*))
-
 (V (CONJ "CONJ"))
 (V (PRO "PRO"))
 (V (DT "DT"))
 (V (N "N"))
+(V (PREP "PREP"))
 (V (F *e*))
-
 (CONJ (DT "DT"))
 (CONJ (PRO "PRO"))
 (CONJ (N "N"))
 (CONJ (V "V"))
-
-(PREP ())
+(PREP (DT "DT"))
+(PREP (PRO "PRO"))
+(PREP (N "N"))
+(PREP (V "V"))
+(PREP (F *e*))
