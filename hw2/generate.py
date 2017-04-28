@@ -1,5 +1,5 @@
 
-
+import sys
 
 
 def add_phonemes(phonemes, e_phonemes, j_kata, matching):
@@ -18,6 +18,27 @@ def add_phonemes(phonemes, e_phonemes, j_kata, matching):
 			phonemes[e_phonemes[match]][kata] = 1.0
 		else:
 			phonemes[e_phonemes[match]][kata] += 1.0
+
+def output_probs(phonemes):
+
+
+	for p in phonemes.keys():
+		pho = phonemes[p]
+
+		total_count = 0.0
+		for i in pho.keys():
+			total_count += pho[i]
+
+		for i in pho.keys():
+			pho[i] = pho[i] / total_count
+
+		for kata in pho.keys():
+			if (pho[kata] < 0.01):
+				continue
+
+			sys.stdout.write("%s : %s # %.2f\n" % (p, kata, pho[kata]))
+
+
 
 
 def main():
@@ -45,7 +66,7 @@ def main():
 
 		line_num += 1
 
-	output_
+	output_probs(phonemes)
 
 
 			
