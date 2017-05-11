@@ -6,7 +6,7 @@
 from collections import defaultdict
 
 def load_jprobs():
-	epron_pairs = []
+	epron_pairs = defaultdict(list)
 	with open("hw3-data/epron-jpron.probs", "r") as f:
 		for line in f:
 			first_part = line.split(":")
@@ -17,126 +17,210 @@ def load_jprobs():
 
 			prob = float(second_part[1].strip())
 
-			epron_pairs.append([eng_pron, jprons, prob])
+			epron_pairs[eng_pron].append([jprons, prob])
 
 	return epron_pairs
+
+def load_eprobs():
+
+	eprobs = defaultdict(lambda: defaultdict(float))
+
+	with open("hw3-data/epron.probs", "r") as f:
+		for line in f:
+			first_part = line.split(":")
+			
+			tags = first_part[0].split()
+
+			state = tags[0] + " " + tags[1]
+
+			second_part = first_part[1].split("#")
+
+			output_tag = second_part[0].strip()
+
+			next_state = tags[1] + " " + output_tag
+
+			prob = float(second_part[1].strip())
+
+			eprobs[state][next_state] = prob
+
+	return eprobs
 			
 
 def decode_katakana(kata):
 	ej_probs = load_jprobs()
 
-	beginning_tags = []
+	eprobs = load_eprobs()
 
-	end_tags = []
+	input_states = defaultdict(list)
 
+	output_states = defaultdict(list)
+
+	
 	#keeps track of what states each letter can actually go to
 	#for example the letter I cannot belong to the state that corresponds to HH so we should not check that
 	#state when we are computing viterbi
 	#not actually necessary but should make it faster
-	states_possible = {}
+	states_possible = defaultdict(list)
 
-	#keep track to only check states that have completed a katakana sound
-	completed_phonemes = []
+	#keeps track of P(w | t) basically probability letter correspond to the given english phoneme
+	state_probs = {}
 
-	#keep track of which states can begin a phoneme
-	starting_phonemes = []
+	p_states = defaultdict(lambda: defaultdict(float))
+	
+	p_count = 0
+	cur_state = 0
+	start_state = 0
+	#going over every phenome pair
 
+	for eprob in eprobs:
+		#tags = eprobs.split()
+		
+		starting_states = []
+		prev_states = []
+	
+		#going over each phenome
+
+		non_null_tags = []
+		for x in eprob.split():
+			if x not in ["<s>", "</s>"]:
+				non_null_tags.append(x)
+		
+		if (len(non_null_tags) == 0):
+			output_states[eprob] = [cur_state]
+			state_probs[cur_state] = 1.0
+			start_state = cur_state			
+			cur_state += 1
+			continue
+
+
+		for j, tag in enumerate(eprob.split()[-1:]):
+			next_states = []
+		
+			#going over how each phenome can be generated from katakana
+			for j_spell in ej_probs[tag]:
+				#print(j_spell)
+				for i in range(len(j_spell[0])):
+					
+					if (i == 0):
+						if (j == 0):
+							#if start of phoneme and first phonem then it can be an input state
+							starting_states.append(cur_state)
+						else:
+							for p in prev_states:
+								p_states[cur_state][p] = 1.0
+
+						state_probs[cur_state] = j_spell[1]
+							
+
+					else:
+						state_probs[cur_state] = 1.0
+						#if phoneme corresponds to only one tag then the previous state must be
+						#the only one possible
+						p_states[cur_state][cur_state - 1] = 1.0
+
+					if (i == len(j_spell[0]) - 1):
+						next_states.append(cur_state)
+					
+					
+					states_possible[j_spell[0][i]].append(cur_state)
+
+					cur_state += 1
+			
+				prev_states = next_states		
+		
+		input_states[eprob] = starting_states
+		output_states[eprob] = prev_states
+							
+						
 	state_to_phoneme = {}
 
-	cur_state = 0
-	for ej in ej_probs:
-		states = []
-		for j in range(len(ej[1])):
+	final_states = []
+				
+	for eprob in eprobs:
+
+		
+		for next_state in eprobs[eprob]:
 			
-			#checking to see if
-			if (ej[1][j] not in states_possible):
-				states_possible[ej[1][j]] = []
+			if ("</s>" in next_state):
+				final_states = final_states + output_states[eprob]
+				continue
+			
+			
+			for n in input_states[next_state]:
+				for p in output_states[eprob]:
+					
+					p_states[p][n] = eprobs[eprob][next_state]
+					
+					state_to_phoneme[p] = eprob.split()[-1]
 
-			if (j == len(ej[1]) - 1):
-				completed_phonemes.append(cur_state)
-				state_to_phoneme[cur_state] = ej[0]
 
-			if (j == 0):
-				starting_phonemes.append(cur_state)
-
-			states_possible[ej[1][j]].append(cur_state)
-			states.append(cur_state)
-
-			cur_state += 1
-		ej.append(states)
-
-	print(len(completed_phonemes))
-
-	#dict to keep track of possible states we previously had
-
-	p_states = {}
-	state_probs = {}
-	for ej in ej_probs:
-		for j in range(len(ej[1])):
-			if (j == 0):
-				p_states[ej[3][j]] = completed_phonemes
-				#probability p(letter | phoneme)
-				#eventually include p(phoneme)
-				state_probs[ej[3][j]] = ej[2]
-			else:
-				p_states[ej[3][j]] = [ej[3][j - 1]]
-				#in the middle of a phoneme to katakana transition so probabilty is just 1
-				#an example of this is IY to I I
-				state_probs[ej[3][j]] = 1.0
-
-	
-	
-	print(cur_state)
-	#for ej in ej_probs:
-		
-		
-
-	print(ej_probs[-1])
-	print(p_states[273])
-	print(p_states[274])
-
-	letters = kata.split()
-	
-	best = defaultdict(lambda: defaultdict(float))
+	best = defaultdict(lambda: defaultdict(lambda: -1.0))
 	back = defaultdict(dict)
+	best[0][start_state] = 1.0
 
-	for l_state in states_possible[letters[0]]:
-		if (l_state in starting_phonemes):
-			score = state_probs[l_state]
-			best[0][l_state] = score
-			back[0][l_state] = 0
+	
+	
 
-	for i, letter in enumerate(letters[1:], 1):
+	
+
+	
+
+	
+	for i, letter in enumerate(kata.split(), 1):
 		#going through every state that is possible given the observed output
 		#print(i)
 		for pos_state in states_possible[letter]:
+			
 			#only checking previous states that are possible
 			for prev in best[i - 1]:
 				#print(prev)
 				#checking to see if the current state could have come from the previous one
-				if prev in p_states[pos_state]:
-					score = best[i - 1][prev] * state_probs[pos_state]
+				#print(prev)
+				
+				if pos_state in p_states[prev]:
+					if (prev == 7659):
+						print("We got somewhere")
+						print(pos_state)
+						score = best[i - 1][prev] * state_probs[pos_state] * p_states[prev][pos_state]
+						print(score)						
+						print(score > best[i][pos_state])
+					score = best[i - 1][prev] * state_probs[pos_state] * p_states[prev][pos_state]
 					if (score > best[i][pos_state]):
 						best[i][pos_state] = score
 						back[i][pos_state] = prev
-	
 
-	max_end_score = 0.0
-	max_end_state = 0
-	
-	for state in best[len(letters) - 1]:
-		if (state not in completed_phonemes):
+		
+	print(p_count)
+	print("output states")
+	print(output_states["<s> <s>"])
+	print(input_states["<s> P"])
+	print(len(best[1]))
+	print(len(eprobs))
+	print("<s> <s>" in eprobs)
+
+	max_score = -1
+	max_state = 0
+	output_steps = len(kata.split())
+	#output_steps = 2
+	for f in best[output_steps]:
+		
+		if (f not in final_states):
 			continue
-		score = best[len(letters) - 1][state]
+		
+		score = best[output_steps][f]
 		#print("%f %d" % (score, state))
-		if (score > max_end_score):
-			max_end_score = score
-			max_end_state = state
+		if (score > max_score):
+			max_score = score
+			max_state = f
 
-	max_states = [max_end_state]
+	
+	print(max_score)
+	print(max_state)
 
-	prev_state = max_end_state
-	for i in range(len(letters) - 1, 0, -1):
+	max_states = [max_state]
+
+	prev_state = max_state
+	for i in range(output_steps, 0, -1):
 		max_states.append(back[i][prev_state])
 		prev_state = back[i][prev_state]
 
@@ -146,15 +230,15 @@ def decode_katakana(kata):
 			final_string.append(state_to_phoneme[state])
 
 	print(final_string)
-
-	print(max_end_score)
-	print(max_end_state)
+	return
+	
+	
 
 
 
 
 def main():
-	decode_katakana("N A I T O")
+	decode_katakana("N I A T O")
 
 if __name__ == "__main__":
 
