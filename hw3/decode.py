@@ -116,7 +116,7 @@ def decode_katakana(kata):
 						state_probs[cur_state] = 1.0
 						#if phoneme corresponds to only one tag then the previous state must be
 						#the only one possible
-						p_states[cur_state][cur_state - 1] = 1.0
+						p_states[cur_state - 1][cur_state] = 1.0
 
 					if (i == len(j_spell[0]) - 1):
 						next_states.append(cur_state)
@@ -140,14 +140,25 @@ def decode_katakana(kata):
 
 		
 		for next_state in eprobs[eprob]:
+
 			
-			if ("</s>" in next_state):
-				final_states = final_states + output_states[eprob]
-				continue
-			
+			if ("</s>" in next_state and next_state not in input_states):
+				states_possible["*e*"].append(cur_state)
+				state_probs[cur_state] = 1.0
+				input_states[next_state].append(cur_state)
+				final_states.append(cur_state)
+				cur_state += 1
+
+				
 			
 			for n in input_states[next_state]:
 				for p in output_states[eprob]:
+
+					if (eprob == "AH T" and next_state == "T </s>"):
+						print(p)
+						print(n)
+						print(eprobs[eprob][next_state])
+			
 					
 					p_states[p][n] = eprobs[eprob][next_state]
 					
@@ -166,7 +177,7 @@ def decode_katakana(kata):
 	
 
 	
-	for i, letter in enumerate(kata.split(), 1):
+	for i, letter in enumerate(kata.split() + ["*e*"], 1):
 		#going through every state that is possible given the observed output
 		#print(i)
 		for pos_state in states_possible[letter]:
@@ -198,9 +209,19 @@ def decode_katakana(kata):
 	print(len(eprobs))
 	print("<s> <s>" in eprobs)
 
+
+	final_state = input_states["T </s>"][0]
+
+	for pos_out in output_states["AH T"]:
+		if 10966 in p_states[pos_out]:
+			print(best[len(kata.split())][pos_out])
+
+	print("This should be best score: ")
+	print(best[len(kata.split()) + 1][final_state])
+
 	max_score = -1
 	max_state = 0
-	output_steps = len(kata.split())
+	output_steps = len(kata.split()) + 1
 	#output_steps = 2
 	for f in best[output_steps]:
 		
