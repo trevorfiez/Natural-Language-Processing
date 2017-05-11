@@ -153,12 +153,6 @@ def decode_katakana(kata):
 			
 			for n in input_states[next_state]:
 				for p in output_states[eprob]:
-
-					if (eprob == "AH T" and next_state == "T </s>"):
-						print(p)
-						print(n)
-						print(eprobs[eprob][next_state])
-			
 					
 					p_states[p][n] = eprobs[eprob][next_state]
 					
@@ -201,24 +195,7 @@ def decode_katakana(kata):
 						back[i][pos_state] = prev
 
 		
-	print(p_count)
-	print("output states")
-	print(output_states["<s> <s>"])
-	print(input_states["<s> P"])
-	print(len(best[1]))
-	print(len(eprobs))
-	print("<s> <s>" in eprobs)
-
-
-	final_state = input_states["T </s>"][0]
-
-	for pos_out in output_states["AH T"]:
-		if 10966 in p_states[pos_out]:
-			print(best[len(kata.split())][pos_out])
-
-	print("This should be best score: ")
-	print(best[len(kata.split()) + 1][final_state])
-
+	
 	max_score = -1
 	max_state = 0
 	output_steps = len(kata.split()) + 1
@@ -259,7 +236,7 @@ def decode_katakana(kata):
 
 
 def main():
-	decode_katakana("N I A T O")
+	decode_katakana("B I D E O T E E P U")
 
 if __name__ == "__main__":
 
