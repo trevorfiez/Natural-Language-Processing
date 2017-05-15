@@ -225,8 +225,8 @@ def decode_katakana(kata, ej_probs, eprobs):
 
 
 def main():
-    eprobs = load_eprobs("hw3-data/" + sys.argv[1])
-    ej_probs = load_jprobs("hw3-data/" + sys.argv[2])
+    eprobs = load_eprobs(sys.argv[1])
+    ej_probs = load_jprobs(sys.argv[2])
 
     for line in sys.stdin:
         decode_katakana(line, ej_probs, eprobs)
