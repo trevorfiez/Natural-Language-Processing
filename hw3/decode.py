@@ -42,7 +42,8 @@ def load_eprobs(path):
     return eprobs
 
 
-def decode_top_k(kata, ej_probs, eprobs, k=1):
+def decode_top_k(kata, ej_probs, eprobs, states_possible, p_states, state_probs, start_state, state_to_phoneme, final_states, k=1):
+    '''    
     input_states = defaultdict(list)
 
     output_states = defaultdict(list)
@@ -150,7 +151,7 @@ def decode_top_k(kata, ej_probs, eprobs, k=1):
 
                     state_to_phoneme[p] = eprob.split()[-1]
 
-
+    '''
     best = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: -1.0)))
     back = defaultdict(lambda: defaultdict(dict))
     
@@ -230,8 +231,7 @@ def decode_top_k(kata, ej_probs, eprobs, k=1):
         print("{0} # {1}".format(fmt_string, max_scores[j][0]))
     return
 
-
-def decode_katakana(kata, ej_probs, eprobs):
+def create_base_tables(ej_probs, eprobs):
     input_states = defaultdict(list)
 
     output_states = defaultdict(list)
@@ -340,15 +340,13 @@ def decode_katakana(kata, ej_probs, eprobs):
                     state_to_phoneme[p] = eprob.split()[-1]
 
 
+    return states_possible, p_states, state_probs, start_state, state_to_phoneme, final_states
+
+def decode_katakana(kata, ej_probs, eprobs, states_possible, p_states, state_probs, start_state, state_to_phoneme, final_states):
+
     best = defaultdict(lambda: defaultdict(lambda: -1.0))
     back = defaultdict(dict)
     best[0][start_state] = 1.0
-
-
-
-
-
-
 
 
     for i, letter in enumerate(kata.split() + ["*e*"], 1):
@@ -363,12 +361,7 @@ def decode_katakana(kata, ej_probs, eprobs):
                 #print(prev)
 
                 if pos_state in p_states[prev]:
-                    if (prev == 7659):
-                        print("We got somewhere")
-                        print(pos_state)
-                        score = best[i - 1][prev] * state_probs[pos_state] * p_states[prev][pos_state]
-                        print(score)
-                        print(score > best[i][pos_state])
+                    
                     score = best[i - 1][prev] * state_probs[pos_state] * p_states[prev][pos_state]
                     if (score > best[i][pos_state]):
                         best[i][pos_state] = score
@@ -415,10 +408,11 @@ def decode_katakana(kata, ej_probs, eprobs):
 def main():
     eprobs = load_eprobs(sys.argv[1])
     ej_probs = load_jprobs(sys.argv[2])
+    states_possible, p_states, state_probs, start_state, state_to_phoneme, final_states = create_base_tables(ej_probs, eprobs)
 
     for line in sys.stdin:
-        #decode_katakana(line, ej_probs, eprobs)
-        decode_top_k(line, ej_probs, eprobs, 5)
+        #decode_katakana(line, ej_probs, eprobs, states_possible, p_states, state_probs, start_state, state_to_phoneme, final_states)
+        decode_top_k(line, ej_probs, eprobs, states_possible, p_states, state_probs, start_state, state_to_phoneme, final_states, 10)
 
 
 if __name__ == "__main__":
