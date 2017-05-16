@@ -295,7 +295,7 @@ def decode_katakana(kata, ej_probs, eprobs, states_possible, p_states, state_pro
     fmt_string = " ".join(final_string[1:])
     #print(final_string[1:])
     #print(fmt_string)
-    sys.stdout.write("%s # %.6e\n" % (fmt_string, max_score))
+    sys.stdout.write("%s # %.6f" % (fmt_string, max_score))
     return
 
 
@@ -305,8 +305,8 @@ def main():
     states_possible, p_states, state_probs, start_state, state_to_phoneme, final_states = create_base_tables(ej_probs, eprobs)
 
     for line in sys.stdin:
-        decode_katakana(line, ej_probs, eprobs, states_possible, p_states, state_probs, start_state, state_to_phoneme, final_states)
-        #decode_top_k(line, ej_probs, eprobs, states_possible, p_states, state_probs, start_state, state_to_phoneme, final_states, 10)
+        #decode_katakana(line, ej_probs, eprobs, states_possible, p_states, state_probs, start_state, state_to_phoneme, final_states)
+        decode_top_k(line, ej_probs, eprobs, states_possible, p_states, state_probs, start_state, state_to_phoneme, final_states, 10)
 
 
 if __name__ == "__main__":
