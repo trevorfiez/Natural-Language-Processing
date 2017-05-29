@@ -1,7 +1,6 @@
-
+from __future__ import print_function
 import sys
 from collections import defaultdict
-
 
 
 def generate_pairs(ek_raw):
@@ -63,7 +62,16 @@ def print_ek_probs(ek_probs):
 
         line += "".join(kata)
 
-        print(line)
+        print(line, file=sys.stderr)
+
+
+def print_probs(ek_probs):
+    for pron in ek_probs.keys():
+        for kata in ek_probs[pron].keys():
+            prob = ek_probs[pron][kata]
+            if prob >= 0.01:
+            	print("{0} : {1} # {2}".format(pron, kata, prob))
+
 
 def count_non_zero(ek_probs):
     nonzero = 0
@@ -74,12 +82,18 @@ def count_non_zero(ek_probs):
 
     return nonzero
 
+
+def get_ek_from_data():
+    raw = sys.stdin.read().split("\n")
+    del raw[2::3]
+    return "\n".join(raw)[0:-1]
+
 def main():
-    ek_raw = sys.stdin.read()
+    ek_raw = get_ek_from_data()
 
     ek_pairs = generate_pairs(ek_raw)
 
-    print(ek_pairs)
+    #print(ek_pairs)
 
     # e step
 
@@ -114,15 +128,16 @@ def main():
                 for pair in align:
                     new_ek[pair[0]][pair[1]] += align_probs[i]
 
-        print("iteration %d\t----- corpus prob= %f" %(it, total_probs))
+        print("iteration %d\t----- corpus prob= %f" %(it, total_probs), file=sys.stderr)
         print_ek_probs(ek_prob)
         normalize_ek_prob(new_ek)
 
         nonzero = count_non_zero(ek_prob)
-        print("nonzeros = %d\n" % (nonzero))
+        print("nonzeros = %d\n" % (nonzero), file=sys.stderr)
 
         ek_prob = new_ek
 
+    print_probs(ek_prob)
         
 
 if __name__ == "__main__":
