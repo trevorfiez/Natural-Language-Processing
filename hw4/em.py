@@ -82,6 +82,68 @@ def count_non_zero(ek_probs):
 
     return nonzero
 
+'''
+def fb_em()
+    ek_raw = get_ek_from_data()
+
+    ek_pairs = generate_pairs(ek_raw)
+    
+    ek_prob = defaultdict(lambda: defaultdict(float))
+
+    initialize_ek_prob(ek_prob, ek_pairs)
+
+    print_ek_probs(ek_prob)
+'''
+
+def viterbi_decode(ek_pairs, ek_prob):
+    
+    orderings = []
+    for ek in ek_pairs:
+        forward = defaultdict(lambda:defaultdict(float))
+        back = defaultdict(lambda: defaultdict(int))        
+        n, m = len(ek[0]), len(ek[1])
+
+        forward[0][0] = 1.0
+        
+
+        for i in xrange(n):
+            epron = ek[0][i]
+
+            for j in forward[i]:
+                for k in range(1, min(m - j, 3) + 1):
+
+                    jseg = " ".join(ek[1][j: j + k])
+                    print(jseg)
+                    score = forward[i][j] * ek_prob[epron][jseg]
+
+                    if (score >= forward[i + 1][j + k]):
+                        back[i + 1][j + k] = (i, j)
+                        forward[i + 1][j + k] = score
+
+        max_kata = m
+        max_pron = n
+
+        ordering = []
+
+        while(max_pron != 0):
+            print(back[max_pron][max_kata])
+            new_pron, new_kata = back[max_pron][max_kata]
+            
+            print(max_pron)
+            for i in range(max_kata - new_kata):         
+                ordering.append(max_pron)
+
+            max_kata = new_kata
+            max_pron = new_pron
+        
+        ordering.reverse()
+        print(ordering)
+
+        orderings.append(ordering)
+    return orderings
+   
+                
+
 
 def get_ek_from_data():
     raw = sys.stdin.read().split("\n")
@@ -136,6 +198,8 @@ def main():
         print("nonzeros = %d\n" % (nonzero), file=sys.stderr)
 
         ek_prob = new_ek
+
+    viterbi_decode(ek_pairs, ek_prob)
 
     print_probs(ek_prob)
         
