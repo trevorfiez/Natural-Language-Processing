@@ -1,7 +1,7 @@
 from __future__ import print_function
 import sys
 from collections import defaultdict
-
+import numpy as np
 
 def generate_pairs(ek_raw):
     ek_lines = ek_raw.split("\n")
@@ -86,7 +86,7 @@ def fb_em(ek_pairs, ek_prob):
 
     for it in range(int(sys.argv[1])):
 
-        total_probs = 1.0
+        total_probs = 0.0
 
         new_ek = defaultdict(lambda: defaultdict(float))
         for ek in ek_pairs:
@@ -107,7 +107,7 @@ def fb_em(ek_pairs, ek_prob):
                         score = forward[i][j] * ek_prob[epron][jseg]
                         forward[i + 1][j + k ] += score
 
-            total_probs *= forward[n][m]
+            total_probs += np.log(forward[n][m])
 
             back[n + 1][m + 1] = 1.0
 
@@ -137,7 +137,7 @@ def fb_em(ek_pairs, ek_prob):
                             continue
                         new_ek[epron][jseg] += forward[i][j]*back[i + 2][j + k + 1] * ek_prob[epron][jseg] * ( 1.0 / forward[n][m])
 
-        print("iteration %d\t----- corpus prob= %f" %(it + 1, total_probs), file=sys.stderr)
+        print("iteration %d\t----- corpus prob= %f" %(it + 1, 10), file=sys.stderr)
         normalize_ek_prob(new_ek)
 
         ek_prob = new_ek
@@ -146,63 +146,6 @@ def fb_em(ek_pairs, ek_prob):
         nonzero = count_non_zero(ek_prob)
         print("nonzeros = %d\n" % (nonzero), file=sys.stderr)
 
-        
-        
-        
-
-            
-                    
-    
-def viterbi_decode(ek_pairs, ek_prob):
-    
-    orderings = []
-    for ek in ek_pairs:
-	print(ek)
-	
-        forward = defaultdict(lambda:defaultdict(float))
-        back = defaultdict(lambda: defaultdict(int))        
-        n, m = len(ek[0]), len(ek[1])
-
-        forward[0][0] = 1.0
-        
-
-        for i in xrange(n):
-            epron = ek[0][i]
-
-            for j in forward[i]:
-                for k in range(1, min(m - j, 3) + 1):
-
-                    jseg = " ".join(ek[1][j: j + k])
-                    #print(jseg)
-                    score = forward[i][j] * ek_prob[epron][jseg]
-
-                    if (score >= forward[i + 1][j + k]):
-                        back[i + 1][j + k] = (i, j)
-                        forward[i + 1][j + k] = score
-
-        max_kata = m
-        max_pron = n
-
-        ordering = []
-
-        while(max_pron != 0):
-            #print(back[max_pron][max_kata])
-            new_pron, new_kata = back[max_pron][max_kata]
-            
-            #print(max_pron)
-            for i in range(max_kata - new_kata):         
-                ordering.append(max_pron)
-
-            max_kata = new_kata
-            max_pron = new_pron
-        
-        ordering.reverse()
-        print(ordering)
-
-        orderings.append(ordering)
-    return orderings
-   
-                
 
 def get_ek_from_data():
     
@@ -231,7 +174,7 @@ def main():
     '''
     for it in range(int(sys.argv[1])):
 
-        total_probs = 1.0
+        total_probs = 0.0
 
         new_ek = defaultdict(lambda: defaultdict(float))
         for ek in ek_pairs:
@@ -249,7 +192,7 @@ def main():
                 sample_prob += cur_prob
                 align_probs.append(cur_prob)
             
-            total_probs *= sample_prob
+            total_probs += np.log(sample_prob)
             align_sum = sum(align_probs)
             
             align_probs = [a / align_sum  for a in align_probs]
