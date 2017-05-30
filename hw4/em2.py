@@ -224,53 +224,11 @@ def main():
     initialize_ek_prob(ek_prob, ek_pairs)
 
     print_ek_probs(ek_prob)
-    '''
+
     fb_em(ek_pairs, ek_prob)
 
     return
-    '''
-    for it in range(int(sys.argv[1])):
-
-        total_probs = 1.0
-
-        new_ek = defaultdict(lambda: defaultdict(float))
-        for ek in ek_pairs:
-            legal_alignments = generate_legal_alignments(ek[0], ek[1])
-
-            align_probs = []
-            
-            sample_prob = 0.0
-            
-            for align in legal_alignments:
-                cur_prob = 1.0
-                for pair in align:
-                    cur_prob *= ek_prob[pair[0]][pair[1]]
-
-                sample_prob += cur_prob
-                align_probs.append(cur_prob)
-            
-            total_probs *= sample_prob
-            align_sum = sum(align_probs)
-            
-            align_probs = [a / align_sum  for a in align_probs]
-            
-            
-
-            for i, align in enumerate(legal_alignments):
-                for pair in align:
-                    new_ek[pair[0]][pair[1]] += align_probs[i]
-
-        
-        print("iteration %d\t----- corpus prob= %f" %(it + 1, total_probs), file=sys.stderr)
-        normalize_ek_prob(new_ek)
-
-        ek_prob = new_ek
-        print_ek_probs(ek_prob)
-        
-        nonzero = count_non_zero(ek_prob)
-        print("nonzeros = %d\n" % (nonzero), file=sys.stderr)
-
-        ek_prob = new_ek
+    
 
     #decoded_pairs = viterbi_decode(ek_pairs, ek_prob)
 
