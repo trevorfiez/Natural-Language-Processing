@@ -157,6 +157,8 @@ def viterbi_decode(ek_pairs, ek_prob):
     
     orderings = []
     for ek in ek_pairs:
+	print(ek)
+	
         forward = defaultdict(lambda:defaultdict(float))
         back = defaultdict(lambda: defaultdict(int))        
         n, m = len(ek[0]), len(ek[1])
@@ -171,7 +173,7 @@ def viterbi_decode(ek_pairs, ek_prob):
                 for k in range(1, min(m - j, 3) + 1):
 
                     jseg = " ".join(ek[1][j: j + k])
-                    print(jseg)
+                    #print(jseg)
                     score = forward[i][j] * ek_prob[epron][jseg]
 
                     if (score >= forward[i + 1][j + k]):
@@ -184,10 +186,10 @@ def viterbi_decode(ek_pairs, ek_prob):
         ordering = []
 
         while(max_pron != 0):
-            print(back[max_pron][max_kata])
+            #print(back[max_pron][max_kata])
             new_pron, new_kata = back[max_pron][max_kata]
             
-            print(max_pron)
+            #print(max_pron)
             for i in range(max_kata - new_kata):         
                 ordering.append(max_pron)
 
@@ -214,8 +216,6 @@ def main():
     ek_raw = get_ek_from_data()
 
     ek_pairs = generate_pairs(ek_raw)
-
-    #print(ek_pairs)
 
     # e step
 
@@ -272,9 +272,8 @@ def main():
 
         ek_prob = new_ek
 
-    #decoded_pairs = viterbi_decode(ek_pairs, ek_prob)
 
-    #print_probs(ek_prob)
+    print_probs(ek_prob)
         
 
 if __name__ == "__main__":
