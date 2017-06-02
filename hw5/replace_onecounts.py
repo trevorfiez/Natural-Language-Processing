@@ -3,25 +3,6 @@ import sys
 from tree import Tree as treelib
 
 
-def main():
-
-    word_counts = {}
-    trees = []
-
-    for line in sys.stdin:
-	tree = treelib.parse(line)
-	trees.append(tree)
-
-        for word in get_words(tree):
-	    if word not in word_counts:
-	        word_counts[word] = 1
-	    else:
-	        word_counts[word] += 1
-
-    for tree in trees:
-	print(replace_onecount(tree, word_counts))
-
-
 def get_words(tree, words=[]):
 
     if not tree.is_terminal():
@@ -44,6 +25,26 @@ def replace_onecount(tree, word_counts):
 	    tree.word = "<unk>"
 
     return tree
+
+
+def main():
+
+    word_counts = {}
+    trees = []
+
+    for line in sys.stdin:
+	tree = treelib.parse(line)
+	trees.append(tree)
+
+        for word in get_words(tree):
+	    if word not in word_counts:
+	        word_counts[word] = 1
+	    else:
+	        word_counts[word] += 1
+
+    for tree in trees:
+	print(replace_onecount(tree, word_counts))
+
 
 if __name__ == "__main__":
 	main()

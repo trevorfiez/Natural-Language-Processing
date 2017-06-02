@@ -2,14 +2,6 @@ from tree import Tree as treelib
 import sys
 
 
-def main():
-    for line in sys.stdin:
-	tree = treelib.parse(line)
-        
-	binarize(tree)
-        print(tree)
-
-
 # Still has unit rules so not CNF?
 def binarize(tree):
     if not tree.is_terminal():
@@ -21,12 +13,23 @@ def binarize(tree):
 	    tree.subs[1:] = []
 	    tree.subs.append(r_subtree)
 
-        if len(tree.subs) > 1: # prevent index oob on unary preterminals
+        binarize(l_subtree)
+
+        if len(tree.subs) > 1: # prevent index oob on unary preterminals/start token
             r_subtree = tree.subs[1]
 
-            binarize(l_subtree)
             binarize(r_subtree)
-	    
+
+    return tree
+	  
+  
+def main():
+
+    for line in sys.stdin:
+	tree = treelib.parse(line)
+        
+	tree = binarize(tree)
+        print(tree)
 
 
 if __name__ == "__main__":
