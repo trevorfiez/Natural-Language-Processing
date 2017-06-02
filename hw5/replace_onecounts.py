@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 from tree import Tree as treelib
 
@@ -39,7 +40,8 @@ def replace_onecount(tree, word_counts):
 	    replace_onecount(sub, word_counts)
     else:
 	if word_counts[tree.word] == 1:
-	     tree.word = "<unk>"
+	    print(tree.word, file=sys.stderr)
+	    tree.word = "<unk>"
 
     return tree
 
