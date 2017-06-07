@@ -3,18 +3,18 @@ from tree import Tree
 import re
 
 def main():
-   pcfg, rpcfg = get_pcfg(open(sys.argv[1]))
+   pcfg, rpcfg, START = get_pcfg(open(sys.argv[1]))
 
-   print(pcfg)
+   #print(pcfg)
 
    sys.stdin.readline()
-   parse(sys.stdin.readline(), pcfg, rpcfg)
+   parse(sys.stdin.readline(), pcfg, rpcfg, START)
 
    #for line in sys.stdin:
    #	parse(line, pcfg, rpcfg)
 
 
-def parse(sentence, pcfg, rpcfg):
+def parse(sentence, pcfg, rpcfg, START):
     words = sentence.rstrip("\n").split(" ")
 
     chart = [[{} for x in range(len(words))] for y in range(len(words))]
@@ -26,6 +26,7 @@ def parse(sentence, pcfg, rpcfg):
     for idx, word in enumerate(words):
 	if word in rpcfg:
 	    chart[idx][idx] = rpcfg[word]
+            back[idx][idx] = {rpcfg[word].keys()[0]: word}
 	else:
 	    chart[idx][idx] = rpcfg["<unk>"]  
 
@@ -48,15 +49,14 @@ def parse(sentence, pcfg, rpcfg):
 
 		    if A not in chart[idx][idx]:
 		        chart[idx][idx][A] = 0
-			back[idx][idx][A] = None
 
 		    if prob > chart[idx][idx][A]:
 			chart[idx][idx][A] = prob
-			back[idx][idx][A] = B
+			#back[idx][idx][A] = B why is this causing an error in prob..?
 			added = True
 
     # CKY loop
-    # start with (w,w) pairs, then ((w,w),w) and (w,(w,w)) pairs, etc
+    # START with (w,w) pairs, then ((w,w),w) and (w,(w,w)) pairs, etc
     for span in range(1, len(words)): 
 
 	for begin in range(0, len(words) - span):
@@ -65,13 +65,12 @@ def parse(sentence, pcfg, rpcfg):
 
 	    for split in range(begin, end): # enumerate binary splits
 
-		print(str(begin) + ", " + str(end))
-		print(str(begin) + ", "+ str(split))
-		print(str(split+1)+", "+str(end) )
+		#print(str(begin) + ", " + str(end))
+		#print(str(begin) + ", "+ str(split))
+		#print(str(split+1)+", "+str(end) )
 		
-
-		print(chart[begin][split])
-		print(chart[split+1][end])
+		#print(chart[begin][split])
+		#print(chart[split+1][end])
 
 		for A in pcfg: # all A, B, C for A -> BC in grammar
 		    for rule in pcfg[A]:
@@ -88,12 +87,11 @@ def parse(sentence, pcfg, rpcfg):
 			    
 			    if A not in chart[begin][end]:
 				chart[begin][end][A] = 0
-				back[begin][end][A] = None
 			
 			    if prob > chart[begin][end][A]:
 				chart[begin][end][A] = prob
+				back[begin][end][A] = ((begin, split, B), (split+1, end, C))
 				
-			    
 			    #print(A + " -> " + B + " " + C)
 
 	    #handle unaries:
@@ -109,27 +107,67 @@ def parse(sentence, pcfg, rpcfg):
 			    
  			    if A not in chart[begin][end]:
 				chart[begin][end][A] = 0
-				back[begin][end][A] = None
 			    
 			    if prob > chart[begin][end][A]:
 			        chart[begin][end][A] = prob
-				back[begin][end][A] = B
+				back[begin][end][A] = ((begin, end, B),)
 			        added = True
 			    
 
     print_chart(chart, words)
-    #print_chart(back)
+    print(" ")
+    print_chart(back, words)
+
+    build_tree(chart, back, words, START)
 
 
 # for debugging
 def print_chart(chart, words):
-    print(words)
-    for i in range(len(chart)):
-	print(chart[i])
+    for row in remove_zeros(chart):
+        print(row)
+
+
+def remove_zeros(chart):
+   # comprehension loops ftw; also this function is mostly for neatness
+   return [[{key: value for key, value in d.items() if value != 0} for d in row] for row in chart]
     
 
+def build_tree(chart, bp, words, START):
+    chart = remove_zeros(chart)
+    bp = remove_zeros(bp)
+
+    prob = 0
+
+    tree = None
+    dfs_tree(tree, bp, 0, -1, START)
+  
+
+    #tree = Tree(START, (0, len(words)), None, None)
+    
+def dfs_tree(tree, bp, i, j, label):
+   p = bp[i][j][label]
+   print(p) 
+
+   if type(p) == str or type(p) == float:
+	return None
+
+   if len(p) == 1:
+	i, j, label = p[0]
+	dfs_tree(tree, bp, i, j, label)
+
+   else:
+	(l_i, l_j, l_label), (r_i, r_j, r_label) = p
+        
+	dfs_tree(tree, bp, l_i, l_j, l_label)
+
+	dfs_tree(tree, bp, r_i, r_j, r_label)
+
+	
+
+
+
 def get_pcfg(pcfg_file):
-    start = pcfg_file.readline()
+    START = pcfg_file.readline().rstrip("\n")
 
     pcfg = {}
     reverse_pcfg = {} ###
@@ -149,7 +187,7 @@ def get_pcfg(pcfg_file):
 
 	reverse_pcfg[to_label][from_label] = float(prob) ###
 
-    return pcfg, reverse_pcfg
+    return pcfg, reverse_pcfg, START
 
 
 if __name__ == "__main__":
