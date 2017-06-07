@@ -7,7 +7,7 @@ def main():
 
    #print(pcfg)
 
-   sys.stdin.readline()
+   #sys.stdin.readline()
    parse(sys.stdin.readline(), pcfg, rpcfg, START)
 
    #for line in sys.stdin:
@@ -94,7 +94,7 @@ def parse(sentence, pcfg, rpcfg, START):
 				
 			    #print(A + " -> " + B + " " + C)
 
-	    #handle unaries:
+	    # handle unaries:
 	    added = True
 	    while added:
 		added = False
@@ -136,34 +136,35 @@ def build_tree(chart, bp, words, START):
     chart = remove_zeros(chart)
     bp = remove_zeros(bp)
 
-    prob = 0
+    #prob = 0 don't really have to calculate tree probs?
 
-    tree = None
-    dfs_tree(tree, bp, 0, -1, START)
-  
+    if START not in bp[0][-1]:
+	print("FAILED TO PARSE")
 
-    #tree = Tree(START, (0, len(words)), None, None)
+    else:
+        tree = Tree(START, (0, len(words)), None, [])
+        dfs_tree(tree, bp, 0, -1, START)
+        tree.pp()
     
 def dfs_tree(tree, bp, i, j, label):
    p = bp[i][j][label]
-   print(p) 
+   print(p)
 
-   if type(p) == str or type(p) == float:
-	return None
+   if type(p) == str:
+	tree.word = p
 
-   if len(p) == 1:
+   elif len(p) == 1:
 	i, j, label = p[0]
-	dfs_tree(tree, bp, i, j, label)
+        tree.subs = [Tree(label, (0,0), None, [])]
+	dfs_tree(tree.subs[0], bp, i, j, label)
 
    else:
 	(l_i, l_j, l_label), (r_i, r_j, r_label) = p
         
-	dfs_tree(tree, bp, l_i, l_j, l_label)
+        tree.subs = [Tree(l_label, (0,0), None, []), Tree(r_label, (0,0), None, [])]
 
-	dfs_tree(tree, bp, r_i, r_j, r_label)
-
-	
-
+	dfs_tree(tree.subs[0], bp, l_i, l_j, l_label)
+	dfs_tree(tree.subs[1], bp, r_i, r_j, r_label)
 
 
 def get_pcfg(pcfg_file):
