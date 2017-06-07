@@ -7,7 +7,7 @@ def main():
 
    #print(pcfg)
 
-   #sys.stdin.readline()
+   sys.stdin.readline()
    parse(sys.stdin.readline(), pcfg, rpcfg, START)
 
    #for line in sys.stdin:
@@ -52,7 +52,7 @@ def parse(sentence, pcfg, rpcfg, START):
 
 		    if prob > chart[idx][idx][A]:
 			chart[idx][idx][A] = prob
-			#back[idx][idx][A] = B why is this causing an error in prob..?
+			back[idx][idx][A] = ((idx, idx, B),) 
 			added = True
 
     # CKY loop
