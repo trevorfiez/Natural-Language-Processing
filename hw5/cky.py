@@ -6,13 +6,14 @@ def main():
    pcfg, rpcfg = get_pcfg(open(sys.argv[1]))
 
    print(pcfg)
+
    parse(sys.stdin.readline(), pcfg, rpcfg)
 
    #for line in sys.stdin:
    #	parse(line, pcfg, rpcfg)
 
 
-def parse(sentence, pcfgm, rpcfg):
+def parse(sentence, pcfg, rpcfg):
     words = sentence.rstrip("\n").split(" ")
 
     chart = [[{} for x in range(len(words))] for y in range(len(words))]
@@ -27,7 +28,7 @@ def parse(sentence, pcfgm, rpcfg):
 	else:
 	    chart[idx][idx] = rpcfg["<unk>"]  
 
-	#handle unaries:
+	#handle lexical unaries:
 	added = True
 	while added == True:
 	    added = False
@@ -52,10 +53,41 @@ def parse(sentence, pcfgm, rpcfg):
 			chart[idx][idx][A] = prob
 			back[idx][idx][A] = B
 			added = True
-	
-    print(chart)
 
- 
+    # CKY loop
+    for span in range(2, len(words)):
+	for begin in range(0, len(words) - span):
+	    end = begin + span
+	    for split in range(begin + 1, end - 1): # enumerate binary splits
+
+		print(str(begin) + ","+ str(split))
+		print(str(split)+","+str(end) )
+		
+		for A in pcfg: # all A, B, C for A -> BC in grammar
+
+		    for rule in pcfg[A]:
+			if len(rule.split(" ")) > 1: # rule not a unary
+			    B, C = rule.split(" ")
+
+			    B_prob = 0 if B not in chart[begin][split] else chart[begin][split][B]
+			    C_prob = 0 if C not in chart[split][end] else chart[split][end][C]
+
+			    prob = B_prob * C_prob * pcfg[A][rule]
+			    
+
+			    print(if prob)
+			    print(A + " -> " + B + " " + C)
+	    print("\n")
+	
+    print_chart(chart, words)
+    #print_chart(back)
+
+
+# for debugging
+def print_chart(chart, words):
+    print(words)
+    for i in range(len(chart)):
+	print(chart[i])
     
 
 def get_pcfg(pcfg_file):
