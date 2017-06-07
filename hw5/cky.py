@@ -75,12 +75,13 @@ def parse(sentence, pcfg, rpcfg):
 
 		for A in pcfg: # all A, B, C for A -> BC in grammar
 		    for rule in pcfg[A]:
-			if len(rule.split(" ")) > 1: # rule not a unary
+			if len(rule.split(" ")) > 1: # rule is NOT unary
 			    B, C = rule.split(" ")
+
 			    B_prob = 0 if B not in chart[begin][split] else chart[begin][split][B]
 			    C_prob = 0 if C not in chart[split+1][end] else chart[split+1][end][C]
 			
-			    print("---------")
+			    #print("---------")
 			    #print(B in chart[begin][split] and C in chart[split+1][end])
 
 			    prob = B_prob * C_prob * pcfg[A][rule]
@@ -99,7 +100,23 @@ def parse(sentence, pcfg, rpcfg):
 	    added = True
 	    while added:
 		added = False
-	
+		for A in pcfg: # enumerate all A, B for A -> B in grammar
+		    for rule in pcfg[A]:
+		        if len(rule.split(" ")) == 1: # rule IS unary
+		  	    B, = rule.split()
+
+		            prob = pcfg[A][rule] * 0 if B not in chart[begin][end] else chart[begin][end][B]
+			    
+ 			    if A not in chart[begin][end]:
+				chart[begin][end][A] = 0
+				back[begin][end][A] = None
+			    
+			    if prob > chart[begin][end][A]:
+			        chart[begin][end][A] = prob
+				back[begin][end][A] = B
+			        added = True
+			    
+
     print_chart(chart, words)
     #print_chart(back)
 
