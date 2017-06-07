@@ -7,6 +7,7 @@ def main():
 
    print(pcfg)
 
+   sys.stdin.readline()
    parse(sys.stdin.readline(), pcfg, rpcfg)
 
    #for line in sys.stdin:
@@ -54,29 +55,36 @@ def parse(sentence, pcfg, rpcfg):
 			back[idx][idx][A] = B
 			added = True
 
+    # next cell should be 0, 1
     # CKY loop
-    for span in range(2, len(words)):
+    # start with (w,w) pairs, then ((w,w),w) and (w,(w,w)) pairs etc
+    for span in range(1, len(words)): 
+
 	for begin in range(0, len(words) - span):
+
 	    end = begin + span
-	    for split in range(begin + 1, end - 1): # enumerate binary splits
 
-		print(str(begin) + ","+ str(split))
-		print(str(split)+","+str(end) )
+	    for split in range(begin, end): # enumerate binary splits
+
+		print(str(begin) + ", " + str(end))
+		print(str(begin) + ", "+ str(split))
+		print(str(split+1)+", "+str(end) )
 		
-		for A in pcfg: # all A, B, C for A -> BC in grammar
 
+		print(chart[begin][split])
+		print(chart[split+1][end])
+
+		for A in pcfg: # all A, B, C for A -> BC in grammar
 		    for rule in pcfg[A]:
 			if len(rule.split(" ")) > 1: # rule not a unary
 			    B, C = rule.split(" ")
 
-			    B_prob = 0 if B not in chart[begin][split] else chart[begin][split][B]
-			    C_prob = 0 if C not in chart[split][end] else chart[split][end][C]
+			    #B_prob = 0 if B not in chart[begin][split] else chart[begin][split][B]
+			    #C_prob = 0 if C not in chart[split+1][end] else chart[split+1][end][C]
 
-			    prob = B_prob * C_prob * pcfg[A][rule]
+			    #prob = B_prob * C_prob * pcfg[A][rule]
 			    
-
-			    print(if prob)
-			    print(A + " -> " + B + " " + C)
+			    #print(A + " -> " + B + " " + C)
 	    print("\n")
 	
     print_chart(chart, words)
