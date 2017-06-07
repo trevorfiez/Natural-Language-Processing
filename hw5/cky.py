@@ -55,9 +55,8 @@ def parse(sentence, pcfg, rpcfg):
 			back[idx][idx][A] = B
 			added = True
 
-    # next cell should be 0, 1
     # CKY loop
-    # start with (w,w) pairs, then ((w,w),w) and (w,(w,w)) pairs etc
+    # start with (w,w) pairs, then ((w,w),w) and (w,(w,w)) pairs, etc
     for span in range(1, len(words)): 
 
 	for begin in range(0, len(words) - span):
@@ -78,14 +77,28 @@ def parse(sentence, pcfg, rpcfg):
 		    for rule in pcfg[A]:
 			if len(rule.split(" ")) > 1: # rule not a unary
 			    B, C = rule.split(" ")
+			    B_prob = 0 if B not in chart[begin][split] else chart[begin][split][B]
+			    C_prob = 0 if C not in chart[split+1][end] else chart[split+1][end][C]
+			
+			    print("---------")
+			    #print(B in chart[begin][split] and C in chart[split+1][end])
 
-			    #B_prob = 0 if B not in chart[begin][split] else chart[begin][split][B]
-			    #C_prob = 0 if C not in chart[split+1][end] else chart[split+1][end][C]
-
-			    #prob = B_prob * C_prob * pcfg[A][rule]
+			    prob = B_prob * C_prob * pcfg[A][rule]
+			    
+			    if A not in chart[begin][end]:
+				chart[begin][end][A] = 0
+				back[begin][end][A] = None
+			
+			    if prob > chart[begin][end][A]:
+				chart[begin][end][A] = prob
+				
 			    
 			    #print(A + " -> " + B + " " + C)
-	    print("\n")
+
+	    #handle unaries:
+	    added = True
+	    while added:
+		added = False
 	
     print_chart(chart, words)
     #print_chart(back)
