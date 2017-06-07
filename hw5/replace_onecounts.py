@@ -36,7 +36,7 @@ def main():
 	tree = treelib.parse(line)
 	trees.append(tree)
 
-        for word in get_words(tree):
+        for word in get_words(tree, []):
 	    if word not in word_counts:
 	        word_counts[word] = 1
 	    else:

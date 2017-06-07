@@ -9,7 +9,12 @@ def binarize(tree):
         l_subtree = tree.subs[0]
 
         if len(tree.subs) > 2:
-	    r_subtree = treelib(tree.label + "'", tree.span, None, tree.subs[1:])
+	    new_label = tree.label
+
+	    if tree.label[-1] != "'":
+		new_label += "'"
+
+	    r_subtree = treelib(new_label, tree.span, None, tree.subs[1:])
 	    tree.subs[1:] = []
 	    tree.subs.append(r_subtree)
 
