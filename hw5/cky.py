@@ -7,6 +7,10 @@ from binarize import binarize
 def main():
    pcfg, rpcfg, START = get_pcfg(open(sys.argv[1]))
 
+   t = Tree.parse("(TOP (S (NP (PRP I)) (VP (VBP need) (NP (NP (DT a) (NN flight)) (PP (IN from) (NP (NNP Indianapolis))) (PP (TO to) (NP (NNP Houston))) (PP (IN on) (NP (NNP T) (NP' (NNP W) (NNP A))))))))")
+   debinarize(t)
+   t.pp()
+
 #   for line in sys.stdin:
 #   	print(parse(line, pcfg, rpcfg, START))
 
@@ -200,10 +204,9 @@ def debinarize(tree):
 
             debinarize(tree)
     
-        debinarize(tree.subs[0])
-	if len(tree.subs) > 1:
-	    debinarize(tree.subs[1])
-    
+	for sub in tree.subs:
+	    debinarize(sub)
+
     return tree
 
 
