@@ -2,25 +2,20 @@ import sys
 from tree import Tree
 import re
 
+from binarize import binarize
+
 def main():
    pcfg, rpcfg, START = get_pcfg(open(sys.argv[1]))
 
-   #print(pcfg)
-
-   sys.stdin.readline()
-   parse(sys.stdin.readline(), pcfg, rpcfg, START)
-
-   #for line in sys.stdin:
-   #	parse(line, pcfg, rpcfg)
+#   for line in sys.stdin:
+#   	print(parse(line, pcfg, rpcfg, START))
 
 
 def parse(sentence, pcfg, rpcfg, START):
     words = sentence.rstrip("\n").split(" ")
 
-    chart = [[{} for x in range(len(words))] for y in range(len(words))]
-
-    back = [[{} for x in range(len(words))] for y in range(len(words))]
-
+    chart = [[{} for x in range(len(words))] for y in range(len(words))] # cky table
+    back = [[{} for x in range(len(words))] for y in range(len(words))] # backpointer table
 
     #init lexicon
     for idx, word in enumerate(words):
@@ -114,41 +109,43 @@ def parse(sentence, pcfg, rpcfg, START):
 			        added = True
 			    
 
-    print_chart(chart, words)
-    print(" ")
-    print_chart(back, words)
+    #print_chart(chart, words)
+    #print(" ")
+    #print_chart(back, words)
 
-    build_tree(chart, back, words, START)
-
+    tree = build_tree(chart, back, words, START)
+    debinarize(tree).pp()
+    return debinarize(tree)
+ 
 
 # for debugging
 def print_chart(chart, words):
-    for row in remove_zeros(chart):
+    for row in remove_zero_probs(chart):
         print(row)
 
 
-def remove_zeros(chart):
-   # comprehension loops ftw; also this function is mostly for neatness
+def remove_zero_probs(chart):
    return [[{key: value for key, value in d.items() if value != 0} for d in row] for row in chart]
     
 
 def build_tree(chart, bp, words, START):
-    chart = remove_zeros(chart)
-    bp = remove_zeros(bp)
-
-    #prob = 0 don't really have to calculate tree probs?
+    chart = remove_zero_probs(chart)
+    bp = remove_zero_probs(bp)
 
     if START not in bp[0][-1]:
 	print("FAILED TO PARSE")
+	return None
 
     else:
-        tree = Tree(START, (0, len(words)), None, [])
+        tree = Tree(START, (0, 0), None, [])
         dfs_tree(tree, bp, 0, -1, START)
-        tree.pp()
+
+	return tree
     
+
 def dfs_tree(tree, bp, i, j, label):
    p = bp[i][j][label]
-   print(p)
+   #print(p)
 
    if type(p) == str:
 	tree.word = p
@@ -189,6 +186,25 @@ def get_pcfg(pcfg_file):
 	reverse_pcfg[to_label][from_label] = float(prob) ###
 
     return pcfg, reverse_pcfg, START
+
+
+def debinarize(tree):
+    if not tree.is_terminal():
+
+        if tree.subs[-1].label[-1] == "'":
+	    tmp = tree.subs[-1].subs
+
+	    del tree.subs[-1] 
+	    for sub in tmp:
+	        tree.subs.append(sub)
+
+            debinarize(tree)
+    
+        debinarize(tree.subs[0])
+	if len(tree.subs) > 1:
+	    debinarize(tree.subs[1])
+    
+    return tree
 
 
 if __name__ == "__main__":
