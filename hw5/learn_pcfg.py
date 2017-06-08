@@ -6,7 +6,7 @@ def print_pcfg(pcfg):
     print("TOP")
     for from_label in pcfg:
 	for to_label in pcfg[from_label]:
-	    print("%s -> %s # %f" % (from_label, to_label, pcfg[from_label][to_label]))
+	    print("%s -> %s # %.4f" % (from_label, to_label, pcfg[from_label][to_label]))
 
 
 def normalize_pcfg(pcfg, label_counts):

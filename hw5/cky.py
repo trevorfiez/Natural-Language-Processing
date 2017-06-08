@@ -1,7 +1,7 @@
 import sys
 from tree import Tree
 import re
-from collections import OrderedDict
+
 
 from binarize import binarize
 
@@ -19,17 +19,17 @@ def parse(sentence, pcfg, rpcfg, START):
     words = sentence.rstrip("\n").split(" ")
     #print(words)
 
-    chart = [[OrderedDict() for x in range(len(words))] for y in range(len(words))] # cky table
-    back = [[OrderedDict() for x in range(len(words))] for y in range(len(words))] # backpointer table
+    chart = [[{} for x in range(len(words))] for y in range(len(words))] # cky table
+    back = [[{} for x in range(len(words))] for y in range(len(words))] # backpointer table
 
     #init lexicon
     for idx, word in enumerate(words):
 	if word in rpcfg:
 	    chart[idx][idx] = rpcfg[word]
-            back[idx][idx] = OrderedDict({rpcfg[word].keys()[0]: word})
+            back[idx][idx] = {rpcfg[word].keys()[0]: word}
 	else:
 	    chart[idx][idx] = rpcfg["<unk>"]  
-	    back[idx][idx] = OrderedDict({key: "<unk>" for key, value in rpcfg["<unk>"].items()})
+	    back[idx][idx] = {key: "<unk>" for key, value in rpcfg["<unk>"].items()}
 
 	#handle lexical unaries:
 	added = True
@@ -148,46 +148,50 @@ def build_tree(chart, bp, words, START):
     bp = remove_zero_probs(bp)
 
     if START not in bp[0][-1]:
+        print("weird failure")
         return None
 
     else:
         tree = Tree(START, (0, 0), None, [])
 
         try:
-            dfs_tree(tree, bp, 0, -1, START)
+            dfs_tree(words, tree, bp, 0, -1, START)
 	except KeyError:
 	    return None
 
         return debinarize(tree)
     
 
-def dfs_tree(tree, bp, i, j, label):
+def dfs_tree(words, tree, bp, i, j, label):
    p = bp[i][j][label]
 
    #print(p)
 
    if type(p) == str:
-	tree.word = p
+        if p != "<unk>":
+	    tree.word = p
+	else:
+	    tree.word = words[i]
 
    elif len(p) == 1:
 	i, j, label = p[0]
         tree.subs = [Tree(label, (0,0), None, [])]
-	dfs_tree(tree.subs[0], bp, i, j, label)
+	dfs_tree(words, tree.subs[0], bp, i, j, label)
 
    else:
 	(l_i, l_j, l_label), (r_i, r_j, r_label) = p
         
         tree.subs = [Tree(l_label, (0,0), None, []), Tree(r_label, (0,0), None, [])]
 
-	dfs_tree(tree.subs[0], bp, l_i, l_j, l_label)
-	dfs_tree(tree.subs[1], bp, r_i, r_j, r_label)
+	dfs_tree(words, tree.subs[0], bp, l_i, l_j, l_label)
+	dfs_tree(words, tree.subs[1], bp, r_i, r_j, r_label)
 
 
 def get_pcfg(pcfg_file):
     START = pcfg_file.readline().rstrip("\n")
 
-    pcfg = OrderedDict()
-    reverse_pcfg = OrderedDict() ###
+    pcfg = {}
+    reverse_pcfg = {} ###
 
     for line in pcfg_file:
 	from_label = re.search('(.*) ->', line).group(1)
@@ -195,12 +199,12 @@ def get_pcfg(pcfg_file):
 	prob = re.search('# (.*)', line).group(1)
 	
 	if from_label not in pcfg:
-	    pcfg[from_label] = OrderedDict()
+	    pcfg[from_label] = {}
 	
 	pcfg[from_label][to_label] = float(prob)
 
 	if to_label not in reverse_pcfg: ###
-	    reverse_pcfg[to_label] = OrderedDict()  ###
+	    reverse_pcfg[to_label] = {}  ###
 
 	reverse_pcfg[to_label][from_label] = float(prob) ###
 
