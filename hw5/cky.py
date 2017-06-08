@@ -1,39 +1,41 @@
 import sys
 from tree import Tree
 import re
+from collections import OrderedDict
 
 from binarize import binarize
 
 def main():
-   pcfg, rpcfg, START = get_pcfg(open(sys.argv[1]))
+#   pcfg, rpcfg, START = get_pcfg(open(sys.argv[1]))
+#   print(parse("I need a flight from Atlanta to Charlotte North Carolina next Monday", pcfg, rpcfg, START))
+ 
 
-   t = Tree.parse("(TOP (S (NP (PRP I)) (VP (VBP need) (NP (NP (DT a) (NN flight)) (PP (IN from) (NP (NNP Indianapolis))) (PP (TO to) (NP (NNP Houston))) (PP (IN on) (NP (NNP T) (NP' (NNP W) (NNP A))))))))")
-   debinarize(t)
-   t.pp()
-
-#   for line in sys.stdin:
-#   	print(parse(line, pcfg, rpcfg, START))
+   for line in sys.stdin:
+        pcfg, rpcfg, START = get_pcfg(open(sys.argv[1]))
+   	print(parse(line, pcfg, rpcfg, START))
 
 
 def parse(sentence, pcfg, rpcfg, START):
     words = sentence.rstrip("\n").split(" ")
+    #print(words)
 
-    chart = [[{} for x in range(len(words))] for y in range(len(words))] # cky table
-    back = [[{} for x in range(len(words))] for y in range(len(words))] # backpointer table
+    chart = [[OrderedDict() for x in range(len(words))] for y in range(len(words))] # cky table
+    back = [[OrderedDict() for x in range(len(words))] for y in range(len(words))] # backpointer table
 
     #init lexicon
     for idx, word in enumerate(words):
 	if word in rpcfg:
 	    chart[idx][idx] = rpcfg[word]
-            back[idx][idx] = {rpcfg[word].keys()[0]: word}
+            back[idx][idx] = OrderedDict({rpcfg[word].keys()[0]: word})
 	else:
 	    chart[idx][idx] = rpcfg["<unk>"]  
+	    back[idx][idx] = OrderedDict({key: "<unk>" for key, value in rpcfg["<unk>"].items()})
 
 	#handle lexical unaries:
 	added = True
 	while added == True:
-	    added = False
 
+	    added = False
 	    labels = [x for x in chart[idx][idx]]
 	    for B in labels:
 
@@ -112,15 +114,24 @@ def parse(sentence, pcfg, rpcfg, START):
 				back[begin][end][A] = ((begin, end, B),)
 			        added = True
 			    
-
+    #print(chart)
     #print_chart(chart, words)
     #print(" ")
     #print_chart(back, words)
 
+    #print("-----------")
+    #print(back[0][0])
+    #print("------------")
+    #print(back[8][8])
+
     tree = build_tree(chart, back, words, START)
-    debinarize(tree).pp()
-    return debinarize(tree)
- 
+
+
+    if tree == None: # failed to parse
+	return "NONE"
+    else:
+	return tree
+
 
 # for debugging
 def print_chart(chart, words):
@@ -137,18 +148,22 @@ def build_tree(chart, bp, words, START):
     bp = remove_zero_probs(bp)
 
     if START not in bp[0][-1]:
-	print("FAILED TO PARSE")
-	return None
+        return None
 
     else:
         tree = Tree(START, (0, 0), None, [])
-        dfs_tree(tree, bp, 0, -1, START)
 
-	return tree
+        try:
+            dfs_tree(tree, bp, 0, -1, START)
+	except KeyError:
+	    return None
+
+        return debinarize(tree)
     
 
 def dfs_tree(tree, bp, i, j, label):
    p = bp[i][j][label]
+
    #print(p)
 
    if type(p) == str:
@@ -171,8 +186,8 @@ def dfs_tree(tree, bp, i, j, label):
 def get_pcfg(pcfg_file):
     START = pcfg_file.readline().rstrip("\n")
 
-    pcfg = {}
-    reverse_pcfg = {} ###
+    pcfg = OrderedDict()
+    reverse_pcfg = OrderedDict() ###
 
     for line in pcfg_file:
 	from_label = re.search('(.*) ->', line).group(1)
@@ -180,12 +195,12 @@ def get_pcfg(pcfg_file):
 	prob = re.search('# (.*)', line).group(1)
 	
 	if from_label not in pcfg:
-	    pcfg[from_label] = {}
+	    pcfg[from_label] = OrderedDict()
 	
 	pcfg[from_label][to_label] = float(prob)
 
 	if to_label not in reverse_pcfg: ###
-	    reverse_pcfg[to_label] = {}  ###
+	    reverse_pcfg[to_label] = OrderedDict()  ###
 
 	reverse_pcfg[to_label][from_label] = float(prob) ###
 
